@@ -1,9 +1,11 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { BlogsService } from '../application/blogs.service';
 import { CreateBlogDto } from '../dto/create-blog.dto';
 import { BlogResponseDto } from '../dto/blog-view.dto';
+import { BasicAuthGuard } from '../../../user-accounts/guards/basic/basic-auth.guard';
 
-@Controller('blogs')
+@Controller('sa/blogs')
+@UseGuards(BasicAuthGuard)
 export class BlogsController {
   constructor(private readonly blogService: BlogsService) {}
 
