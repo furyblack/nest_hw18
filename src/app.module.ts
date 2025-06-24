@@ -7,6 +7,7 @@ import { TestingController } from './moduls/testing/testing.controller';
 import { TestingModule } from './moduls/testing/testing.module';
 import { NotificationsModule } from './moduls/notifications/notifications.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BloggersPlatformModule } from './moduls/blog-platform/bloggers-platform.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }),
     UserAccountsModule,
     TestingModule,
+    BloggersPlatformModule,
     NotificationsModule,
     ThrottlerModule.forRoot([
       {
