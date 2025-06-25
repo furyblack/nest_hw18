@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { CreateBlogDto, UpdateBlogDto } from '../dto/create-blog.dto';
 import { GetBlogsQueryDto } from '../dto/getBlogsQueryDto';
@@ -9,8 +9,8 @@ export class BlogsRepository {
   async createBlog(createBlogDto: CreateBlogDto) {
     const result = await this.dataSource.query(
       `
-      INSERT INTO blogs(name, description, website_url) 
-      VALUES ($1, $2, $3)
+      INSERT INTO blogs(name, description, website_url, deletion_status) 
+      VALUES ($1, $2, $3, 'active')
       RETURNING id, name, description, website_url as "websiteUrl", created_at as "createdAt", is_membership as "isMembership"
       `,
       [createBlogDto.name, createBlogDto.description, createBlogDto.websiteUrl],
@@ -89,31 +89,45 @@ export class BlogsRepository {
       })),
     };
   }
-  // Обновление блога
-  async updateBlog(id: string, dto: UpdateBlogDto): Promise<boolean> {
-    const result = await this.dataSource.query(
-      `
-    UPDATE blogs
-    SET name = $1,
-        description = $2,
-        website_url = $3
-    WHERE id = $4 AND deletion_status = 'active'
-    `,
-      [dto.name, dto.description, dto.websiteUrl, id],
-    );
-    return result.rowCount > 0;
-  }
 
-  // Soft delete
-  async deleteBlog(id: string): Promise<boolean> {
+  async findById(id: string): Promise<any | null> {
     const result = await this.dataSource.query(
       `
-    UPDATE blogs
-    SET deletion_status = 'deleted'
-    WHERE id = $1 AND deletion_status = 'active'
-    `,
+      SELECT * FROM blogs
+      WHERE id = $1 AND deletion_status != 'permanently_deleted'
+      `,
       [id],
     );
-    return result.rowCount > 0;
+    return result[0] || null;
+  }
+
+  async findOrNotFoundFail(id: string): Promise<any> {
+    const blog = await this.findById(id);
+    if (!blog) throw new NotFoundException('Blog not found');
+    return blog;
+  }
+
+  async update(id: string, dto: UpdateBlogDto): Promise<void> {
+    const result = await this.dataSource.query(
+      `
+      UPDATE blogs
+      SET name = $1, description = $2, website_url = $3
+      WHERE id = $4 AND deletion_status = 'active'
+      `,
+      [dto.name, dto.description, dto.websiteUrl, id],
+    );
+    if (result.rowCount === 0) throw new NotFoundException('Blog not found');
+  }
+
+  async softDelete(id: string): Promise<void> {
+    const result = await this.dataSource.query(
+      `
+      UPDATE blogs
+      SET deletion_status = 'deleted'
+      WHERE id = $1 AND deletion_status = 'active'
+      `,
+      [id],
+    );
+    if (result.rowCount === 0) throw new NotFoundException('Blog not found');
   }
 }

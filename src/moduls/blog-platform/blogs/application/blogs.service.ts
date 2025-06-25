@@ -4,23 +4,26 @@ import { CreateBlogDto, UpdateBlogDto } from '../dto/create-blog.dto';
 
 @Injectable()
 export class BlogsService {
-  constructor(private blogsRepo: BlogsRepository) {}
+  constructor(private blogsRepository: BlogsRepository) {}
   async createBlog(createBlogDto: CreateBlogDto) {
-    const blog = await this.blogsRepo.createBlog(createBlogDto);
+    const blog = await this.blogsRepository.createBlog(createBlogDto);
     return blog;
   }
 
   async getBlogById(id: number) {
-    const blog = await this.blogsRepo.findBlogById(id);
+    const blog = await this.blogsRepository.findBlogById(id);
     if (!blog) throw new NotFoundException(`Blog with id ${id} not found`);
     return blog;
   }
 
-  async updateBlog(id: string, dto: UpdateBlogDto): Promise<boolean> {
-    return this.blogsRepo.updateBlog(id, dto);
+  async updateBlog(id: string, dto: UpdateBlogDto): Promise<string> {
+    await this.blogsRepository.findOrNotFoundFail(id);
+    await this.blogsRepository.update(id, dto);
+    return id;
   }
 
-  async deleteBlog(id: string): Promise<boolean> {
-    return this.blogsRepo.deleteBlog(id);
+  async deleteBlog(id: string): Promise<void> {
+    await this.blogsRepository.findOrNotFoundFail(id);
+    await this.blogsRepository.softDelete(id);
   }
 }

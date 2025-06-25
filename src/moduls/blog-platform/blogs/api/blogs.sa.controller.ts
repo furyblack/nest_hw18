@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -21,7 +20,7 @@ import { BlogsRepository } from '../infrastructure/blogs.repository';
 
 @Controller('sa/blogs')
 @UseGuards(BasicAuthGuard)
-export class BlogsController {
+export class BlogsSaController {
   constructor(
     private readonly blogsService: BlogsService,
     private blogRepo: BlogsRepository,
@@ -42,23 +41,19 @@ export class BlogsController {
   }
 
   @Put(':id')
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateBlog(
     @Param('id') id: string,
     @Body() dto: UpdateBlogDto,
   ): Promise<void> {
-    const isUpdated = await this.blogsService.updateBlog(id, dto);
-    if (!isUpdated) {
-      throw new NotFoundException('Blog not found');
-    }
+    await this.blogsService.updateBlog(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(BasicAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param('id') id: string): Promise<void> {
-    const isDeleted = await this.blogsService.deleteBlog(id);
-    if (!isDeleted) {
-      throw new NotFoundException('Blog not found');
-    }
+    await this.blogsService.deleteBlog(id);
   }
 }
