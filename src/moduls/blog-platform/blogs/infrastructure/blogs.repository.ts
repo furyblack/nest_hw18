@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { CreateBlogDto } from '../dto/create-blog.dto';
+import { CreateBlogDto, UpdateBlogDto } from '../dto/create-blog.dto';
 import { GetBlogsQueryDto } from '../dto/getBlogsQueryDto';
 
 @Injectable()
@@ -88,5 +88,32 @@ export class BlogsRepository {
         isMembership: b.is_membership,
       })),
     };
+  }
+  // Обновление блога
+  async updateBlog(id: string, dto: UpdateBlogDto): Promise<boolean> {
+    const result = await this.dataSource.query(
+      `
+    UPDATE blogs
+    SET name = $1,
+        description = $2,
+        website_url = $3
+    WHERE id = $4 AND deletion_status = 'active'
+    `,
+      [dto.name, dto.description, dto.websiteUrl, id],
+    );
+    return result.rowCount > 0;
+  }
+
+  // Soft delete
+  async deleteBlog(id: string): Promise<boolean> {
+    const result = await this.dataSource.query(
+      `
+    UPDATE blogs
+    SET deletion_status = 'deleted'
+    WHERE id = $1 AND deletion_status = 'active'
+    `,
+      [id],
+    );
+    return result.rowCount > 0;
   }
 }
