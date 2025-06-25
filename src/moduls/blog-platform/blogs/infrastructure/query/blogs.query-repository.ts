@@ -8,7 +8,7 @@ export class BlogsQueryRepository {
 
   async getByIdOrNotFoundFail(id: string): Promise<BlogsViewDto> {
     const result = await this.dataSource.query(
-      `SELECT * FROM blogs WHERE id = $1 AND deletion_status != 'permanently_deleted'`,
+      `SELECT * FROM blogs WHERE id = $1 AND deletion_status = 'active'`,
       [id],
     );
 

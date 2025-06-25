@@ -23,6 +23,8 @@ export class BlogsService {
   }
 
   async deleteBlog(id: string): Promise<void> {
+    const blog = await this.blogsRepository.findById(id);
+    if (!blog) throw new NotFoundException(`Blog with id ${id} not found`);
     await this.blogsRepository.findOrNotFoundFail(id);
     await this.blogsRepository.softDelete(id);
   }

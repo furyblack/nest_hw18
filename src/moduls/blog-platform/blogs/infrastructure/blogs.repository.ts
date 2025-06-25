@@ -94,7 +94,7 @@ export class BlogsRepository {
     const result = await this.dataSource.query(
       `
       SELECT * FROM blogs
-      WHERE id = $1 AND deletion_status != 'permanently_deleted'
+      WHERE id = $1 AND deletion_status = 'active'
       `,
       [id],
     );
