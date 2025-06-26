@@ -99,8 +99,7 @@ export class BlogsSaController {
   async deletePost(
     @Param('id') blogId: string,
     @Param('postId') postId: string,
-  ) {
-    const isDeleted = await this.postsService.deletePost(postId, blogId);
-    if (!isDeleted) throw new NotFoundException();
+  ): Promise<void> {
+    await this.postsService.deletePost(postId, blogId); // всё чисто
   }
 }

@@ -80,30 +80,38 @@ export class PostsRepository {
     const pageSize = query.pageSize || 10;
     const skip = (page - 1) * pageSize;
 
-    const sortBy = ['title', 'created_at', 'short_description'].includes(
-      query.sortBy,
-    )
-      ? query.sortBy
-      : 'created_at';
-
     const sortDirection =
       query.sortDirection?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
+    // ✅ Добавили список допустимых полей и соответствующих SQL-полей
+    const validSortFields: Record<string, string> = {
+      title: 'p.title',
+      created_at: 'p.created_at',
+      short_description: 'p.short_description',
+      blogName: 'b.name COLLATE "C"', // ⚠️ важно указать COLLATE для корректной сортировки
+    };
+
+    // ✅ Получаем значение сортировки из запроса или по умолчанию
+    const sortBy = validSortFields[query.sortBy] || 'p.created_at';
+
+    // 📌 Основной SQL-запрос
     const posts = await this.dataSource.query(
       `
-    SELECT p.*, b.name as blogName
-    FROM posts p
-    LEFT JOIN blogs b ON p.blog_id = b.id
-    ORDER BY ${sortBy} ${sortDirection}
-    LIMIT $1 OFFSET $2
-    `,
+          SELECT p.*, b.name as blogName
+          FROM posts p
+                   LEFT JOIN blogs b ON p.blog_id = b.id
+          ORDER BY ${sortBy} ${sortDirection}
+          LIMIT $1 OFFSET $2
+      `,
       [pageSize, skip],
     );
 
+    // 📌 Получаем общее количество постов
     const count = await this.dataSource.query(`SELECT COUNT(*) FROM posts`);
     const totalCount = parseInt(count[0].count, 10);
     const pagesCount = Math.ceil(totalCount / pageSize);
 
+    // 📌 Формируем ответ
     return {
       pagesCount,
       page,
@@ -172,8 +180,8 @@ export class PostsRepository {
       `,
       [dto.title, dto.shortDescription, dto.content, postId, blogId],
     );
-    console.log('UPDATE result:', result.rowCount);
-    return result.length > 0;
+    const updatedRows = result[0]; // это массив с обновленными строками
+    return updatedRows.length > 0;
   }
 
   async deletePost(postId: string, blogId: string): Promise<boolean> {
@@ -185,6 +193,7 @@ export class PostsRepository {
       `,
       [postId, blogId],
     );
-    return result.length > 0;
+    const deletedRows = result[0]; // это массив с удалёнными строками
+    return deletedRows.length > 0;
   }
 }

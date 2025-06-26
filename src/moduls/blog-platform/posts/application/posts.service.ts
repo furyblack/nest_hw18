@@ -72,7 +72,10 @@ export class PostsService {
     return await this.postsRepo.updatePost(postId, blogId, dto);
   }
 
-  async deletePost(postId: string, blogId: string): Promise<boolean> {
-    return await this.postsRepo.deletePost(postId, blogId);
+  async deletePost(postId: string, blogId: string): Promise<void> {
+    const isDeleted = await this.postsRepo.deletePost(postId, blogId);
+    if (!isDeleted) {
+      throw new NotFoundException(); // <-- проверка здесь
+    }
   }
 }
