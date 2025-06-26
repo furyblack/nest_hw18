@@ -15,12 +15,13 @@ export class CustomValidationPipe extends ValidationPipe {
         enableImplicitConversion: true,
       },
       exceptionFactory: (errors: ValidationError[]) => {
-        const errorsMessages = errors.flatMap((err) =>
-          Object.values(err.constraints || {}).map((message) => ({
-            message,
+        const errorsMessages = errors.map((err) => {
+          const firstConstraint = Object.values(err.constraints || {})[0];
+          return {
+            message: firstConstraint,
             field: err.property,
-          })),
-        );
+          };
+        });
         return new BadRequestException({ errorsMessages });
       },
     });
