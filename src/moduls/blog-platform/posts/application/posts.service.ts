@@ -6,6 +6,7 @@ import { GetPostsQueryDto } from '../dto/get-posts-query.dto';
 import { PostViewDto } from '../dto/posts-view.dto';
 import { Pagination } from '../dto/pagination.dto';
 import { LikeStatus } from '../likes/like.enum';
+import { UpdatePostDto } from '../dto/update.post.dto';
 
 @Injectable()
 export class PostsService {
@@ -61,5 +62,17 @@ export class PostsService {
 
   async getPostById(id: string): Promise<PostViewDto | null> {
     return this.postsRepo.findPostById(id);
+  }
+
+  async updatePost(
+    postId: string,
+    blogId: string,
+    dto: UpdatePostDto,
+  ): Promise<boolean> {
+    return await this.postsRepo.updatePost(postId, blogId, dto);
+  }
+
+  async deletePost(postId: string, blogId: string): Promise<boolean> {
+    return await this.postsRepo.deletePost(postId, blogId);
   }
 }

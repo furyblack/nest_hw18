@@ -6,7 +6,6 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { BlogsService } from '../application/blogs.service';
 import { BlogsRepository } from '../infrastructure/blogs.repository';
 import { GetBlogsQueryDto } from '../dto/getBlogsQueryDto';
 import { BlogsQueryRepository } from '../infrastructure/query/blogs.query-repository';
@@ -17,7 +16,6 @@ import { PostsRepository } from '../../posts/infrastructure/posts.repository';
 @Controller('blogs')
 export class PublicBlogsController {
   constructor(
-    private readonly blogsService: BlogsService,
     private blogRepo: BlogsRepository,
     private readonly blogsQueryRepo: BlogsQueryRepository,
     private readonly postsRepo: PostsRepository,

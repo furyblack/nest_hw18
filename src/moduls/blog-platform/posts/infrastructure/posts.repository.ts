@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { GetPostsQueryDto } from '../dto/get-posts-query.dto';
 import { LikeStatus } from '../likes/like.enum';
+import { UpdatePostDto } from '../dto/update.post.dto';
 
 @Injectable()
 export class PostsRepository {
@@ -154,5 +155,36 @@ export class PostsRepository {
         newestLikes: [],
       },
     };
+  }
+
+  async updatePost(
+    postId: string,
+    blogId: string,
+    dto: UpdatePostDto,
+  ): Promise<boolean> {
+    console.log('UPDATE post', { postId, blogId, dto });
+    const result = await this.dataSource.query(
+      `
+      UPDATE posts
+      SET title = $1, short_description = $2, content = $3
+      WHERE id = $4 AND blog_id = $5
+      RETURNING id
+      `,
+      [dto.title, dto.shortDescription, dto.content, postId, blogId],
+    );
+    console.log('UPDATE result:', result.rowCount);
+    return result.length > 0;
+  }
+
+  async deletePost(postId: string, blogId: string): Promise<boolean> {
+    const result = await this.dataSource.query(
+      `
+      DELETE FROM posts
+      WHERE id = $1 AND blog_id = $2
+      RETURNING id
+      `,
+      [postId, blogId],
+    );
+    return result.length > 0;
   }
 }

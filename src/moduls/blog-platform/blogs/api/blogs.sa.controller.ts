@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -22,6 +23,7 @@ import { PostsService } from '../../posts/application/posts.service';
 import { GetPostsQueryDto } from '../../posts/dto/get-posts-query.dto';
 import { PostViewDto } from '../../posts/dto/posts-view.dto';
 import { Pagination } from '../../posts/dto/pagination.dto';
+import { UpdatePostDto } from '../../posts/dto/update.post.dto';
 
 @Controller('sa/blogs')
 @UseGuards(BasicAuthGuard)
@@ -79,5 +81,26 @@ export class BlogsSaController {
     @Query() query: GetPostsQueryDto,
   ): Promise<Pagination<PostViewDto>> {
     return this.postsService.getPostsByBlog(blogId, query);
+  }
+
+  @Put(':id/posts/:postId')
+  @HttpCode(204)
+  async updatePost(
+    @Param('id') blogId: string,
+    @Param('postId') postId: string,
+    @Body() dto: UpdatePostDto,
+  ) {
+    const isUpdated = await this.postsService.updatePost(postId, blogId, dto);
+    if (!isUpdated) throw new NotFoundException();
+  }
+
+  @Delete(':id/posts/:postId')
+  @HttpCode(204)
+  async deletePost(
+    @Param('id') blogId: string,
+    @Param('postId') postId: string,
+  ) {
+    const isDeleted = await this.postsService.deletePost(postId, blogId);
+    if (!isDeleted) throw new NotFoundException();
   }
 }
