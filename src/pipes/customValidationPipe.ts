@@ -9,6 +9,7 @@ import {
 export class CustomValidationPipe extends ValidationPipe {
   constructor() {
     super({
+      transform: true,
       exceptionFactory: (errors: ValidationError[]) => {
         const errorsMessages = errors.flatMap((err) =>
           Object.values(err.constraints || {}).map((message) => ({

@@ -49,14 +49,22 @@ export class BlogsRepository {
     }
 
     // Получаем блоги
+
+    const sortField = ['name', 'website_url', 'created_at'].includes(
+      query.sortBy,
+    )
+      ? query.sortBy
+      : 'created_at';
+
     const sql = `
-    SELECT id, name, description, website_url, created_at, is_membership
-    FROM blogs
-      ${whereClause}
-    ORDER BY ${sortBy} ${sortDirection}
-    LIMIT $${params.length + 1}
-    OFFSET $${params.length + 2}
-  `;
+        SELECT id, name, description, website_url, created_at, is_membership
+        FROM blogs
+                 ${whereClause}
+        ORDER BY ${sortField} ${sortDirection}
+        LIMIT $${params.length + 1}
+OFFSET $${params.length + 2}
+    `;
+
     params.push(pageSize, skip);
 
     const blogs = await this.dataSource.query(sql, params);
