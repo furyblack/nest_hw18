@@ -17,6 +17,11 @@ import { BlogResponseDto } from '../dto/blog-view.dto';
 import { BasicAuthGuard } from '../../../user-accounts/guards/basic/basic-auth.guard';
 import { GetBlogsQueryDto } from '../dto/getBlogsQueryDto';
 import { BlogsRepository } from '../infrastructure/blogs.repository';
+import { CreatePostDto } from '../../posts/dto/create-post.dto';
+import { PostsService } from '../../posts/application/posts.service';
+import { GetPostsQueryDto } from '../../posts/dto/get-posts-query.dto';
+import { PostViewDto } from '../../posts/dto/posts-view.dto';
+import { Pagination } from '../../posts/dto/pagination.dto';
 
 @Controller('sa/blogs')
 @UseGuards(BasicAuthGuard)
@@ -24,6 +29,7 @@ export class BlogsSaController {
   constructor(
     private readonly blogsService: BlogsService,
     private blogRepo: BlogsRepository,
+    private postsService: PostsService,
   ) {}
 
   @Post()
@@ -55,5 +61,23 @@ export class BlogsSaController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param('id') id: string): Promise<void> {
     await this.blogsService.deleteBlog(id);
+  }
+
+  @Post(':id/posts')
+  @HttpCode(HttpStatus.CREATED)
+  async createPostForBlog(
+    @Param('id') blogId: string,
+    @Body() dto: CreatePostDto,
+  ): Promise<PostViewDto> {
+    return this.postsService.createPostForBlog(blogId, dto);
+  }
+
+  @Get(':id/posts')
+  @HttpCode(HttpStatus.OK)
+  async getPostsForBlog(
+    @Param('id') blogId: string,
+    @Query() query: GetPostsQueryDto,
+  ): Promise<Pagination<PostViewDto>> {
+    return this.postsService.getPostsByBlog(blogId, query);
   }
 }
