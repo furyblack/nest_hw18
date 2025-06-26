@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { GetPostsQueryDto } from '../dto/get-posts-query.dto';
+import { LikeStatus } from '../likes/like.enum';
 
 @Injectable()
 export class PostsRepository {
@@ -70,6 +71,88 @@ export class PostsRepository {
           newestLikes: [],
         },
       })),
+    };
+  }
+
+  async getAllPostsWithPagination(query: GetPostsQueryDto) {
+    const page = query.pageNumber || 1;
+    const pageSize = query.pageSize || 10;
+    const skip = (page - 1) * pageSize;
+
+    const sortBy = ['title', 'created_at', 'short_description'].includes(
+      query.sortBy,
+    )
+      ? query.sortBy
+      : 'created_at';
+
+    const sortDirection =
+      query.sortDirection?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const posts = await this.dataSource.query(
+      `
+    SELECT p.*, b.name as blogName
+    FROM posts p
+    LEFT JOIN blogs b ON p.blog_id = b.id
+    ORDER BY ${sortBy} ${sortDirection}
+    LIMIT $1 OFFSET $2
+    `,
+      [pageSize, skip],
+    );
+
+    const count = await this.dataSource.query(`SELECT COUNT(*) FROM posts`);
+    const totalCount = parseInt(count[0].count, 10);
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return {
+      pagesCount,
+      page,
+      pageSize,
+      totalCount,
+      items: posts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        shortDescription: p.short_description,
+        content: p.content,
+        blogId: p.blog_id,
+        blogName: p.blogname,
+        createdAt: p.created_at,
+        extendedLikesInfo: {
+          likesCount: 0,
+          dislikesCount: 0,
+          myStatus: 'None',
+          newestLikes: [],
+        },
+      })),
+    };
+  }
+
+  async findPostById(id: string) {
+    const result = await this.dataSource.query(
+      `
+    SELECT p.*, b.name as blogName
+    FROM posts p
+    LEFT JOIN blogs b ON p.blog_id = b.id
+    WHERE p.id = $1
+    `,
+      [id],
+    );
+    const post = result[0];
+    if (!post) return null;
+
+    return {
+      id: post.id,
+      title: post.title,
+      shortDescription: post.short_description,
+      content: post.content,
+      blogId: post.blog_id,
+      blogName: post.blogname,
+      createdAt: post.created_at,
+      extendedLikesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: LikeStatus.None,
+        newestLikes: [],
+      },
     };
   }
 }

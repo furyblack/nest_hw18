@@ -1,3 +1,5 @@
+import { LikeStatus } from '../likes/like.enum';
+
 export class NewestLikeDto {
   addedAt: string;
   userId: string;
@@ -7,7 +9,7 @@ export class NewestLikeDto {
 export class ExtendedLikesInfoDto {
   likesCount: number;
   dislikesCount: number;
-  myStatus: 'None' | 'Like' | 'Dislike';
+  myStatus: LikeStatus;
   newestLikes: NewestLikeDto[];
 }
 

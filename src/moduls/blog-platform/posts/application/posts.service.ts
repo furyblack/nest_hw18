@@ -5,6 +5,7 @@ import { CreatePostDto } from '../dto/create-post.dto';
 import { GetPostsQueryDto } from '../dto/get-posts-query.dto';
 import { PostViewDto } from '../dto/posts-view.dto';
 import { Pagination } from '../dto/pagination.dto';
+import { LikeStatus } from '../likes/like.enum';
 
 @Injectable()
 export class PostsService {
@@ -48,9 +49,17 @@ export class PostsService {
       extendedLikesInfo: {
         likesCount: 0,
         dislikesCount: 0,
-        myStatus: 'None',
+        myStatus: LikeStatus.None,
         newestLikes: [],
       },
     };
+  }
+
+  async getAllPosts(query: GetPostsQueryDto) {
+    return this.postsRepo.getAllPostsWithPagination(query);
+  }
+
+  async getPostById(id: string): Promise<PostViewDto | null> {
+    return this.postsRepo.findPostById(id);
   }
 }
