@@ -3,6 +3,22 @@ import { DataSource } from 'typeorm';
 import { CreateBlogDto, UpdateBlogDto } from '../dto/create-blog.dto';
 import { GetBlogsQueryDto } from '../dto/getBlogsQueryDto';
 
+enum deletionStatus {
+  ACTIVE = 'active',
+  DELETED = 'deleted',
+  PERMANENT = 'permanently_deleted',
+}
+
+type BlogFormDbType = {
+  id: string;
+  name: string;
+  description: string;
+  website_url: string;
+  is_membership: boolean;
+  created_at: string;
+  deletion_status: deletionStatus;
+};
+
 @Injectable()
 export class BlogsRepository {
   constructor(private dataSource: DataSource) {}
@@ -18,76 +34,54 @@ export class BlogsRepository {
     return result[0];
   }
   async findBlogById(id: number): Promise<any> {
-    const result = await this.dataSource.query(
-      `SELECT * FROM blogs WHERE id = $1`,
-      [id],
-    );
+    await this.dataSource.query(`SELECT * FROM blogs WHERE id = $1`, [id]);
   }
   async getAllBlogsWithPagination(query: GetBlogsQueryDto) {
     const page = query.pageNumber || 1;
     const pageSize = query.pageSize || 10;
-    const skip = (page - 1) * pageSize;
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+
+    const nameFilter = query.searchNameTerm?.toLowerCase() || '';
 
     const sortBy = ['name', 'website_url', 'created_at'].includes(query.sortBy)
       ? query.sortBy
       : 'created_at';
-
     const sortDirection =
       query.sortDirection?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    const params: any[] = [];
-    let whereClause = "WHERE deletion_status = 'active'";
-    const searchConditions: string[] = [];
-
-    if (query.searchNameTerm) {
-      params.push(`%${query.searchNameTerm.toLowerCase()}%`);
-      searchConditions.push(`LOWER(name) LIKE $${params.length}`);
-    }
-
-    if (searchConditions.length > 0) {
-      whereClause += ` AND (${searchConditions.join(' OR ')})`;
-    }
-
-    // Получаем блоги
-
-    const sortField = ['name', 'website_url', 'created_at'].includes(
-      query.sortBy,
-    )
-      ? query.sortBy
-      : 'created_at';
-
-    const sql = `
-        SELECT id, name, description, website_url, created_at, is_membership
-        FROM blogs
-                 ${whereClause}
-        ORDER BY ${sortField} ${sortDirection}
-        LIMIT $${params.length + 1}
-OFFSET $${params.length + 2}
-    `;
-
-    params.push(pageSize, skip);
-
-    const blogs = await this.dataSource.query(sql, params);
-
-    // Общее количество
-    const countSql = `
+    // 💥 тут фильтрация с учётом имени
+    const totalResult = await this.dataSource.query<[{ count: string }]>(
+      `
     SELECT COUNT(*)
     FROM blogs
-      ${whereClause}
-  `;
-    const countResult = await this.dataSource.query(
-      countSql,
-      params.slice(0, params.length - 2),
+    WHERE deletion_status = 'active'
+      AND LOWER(name) LIKE $1
+    `,
+      [`%${nameFilter}%`],
     );
-    const totalCount = parseInt(countResult[0].count, 10);
+    const totalCount = parseInt(totalResult[0].count, 10);
     const pagesCount = Math.ceil(totalCount / pageSize);
+
+    // ⚠️ здесь тоже фильтрация с тем же фильтром
+    const blogs = await this.dataSource.query<BlogFormDbType[]>(
+      `
+          SELECT *
+          FROM blogs
+          WHERE deletion_status = 'active'
+            AND LOWER(name) LIKE $1
+          ORDER BY "${sortBy}" ${sortDirection}
+          LIMIT $2 OFFSET $3
+      `,
+      [`%${nameFilter}%`, limit, offset],
+    );
 
     return {
       pagesCount,
       page,
       pageSize,
       totalCount,
-      items: blogs.map((b: any) => ({
+      items: blogs.map((b) => ({
         id: b.id,
         name: b.name,
         description: b.description,

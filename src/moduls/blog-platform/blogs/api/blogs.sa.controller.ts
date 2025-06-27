@@ -39,8 +39,7 @@ export class BlogsSaController {
   async createBlog(
     @Body() createBlogDto: CreateBlogDto,
   ): Promise<BlogResponseDto> {
-    const result = await this.blogsService.createBlog(createBlogDto);
-    return result;
+    return await this.blogsService.createBlog(createBlogDto);
   }
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -100,6 +99,6 @@ export class BlogsSaController {
     @Param('id') blogId: string,
     @Param('postId') postId: string,
   ): Promise<void> {
-    await this.postsService.deletePost(postId, blogId); // всё чисто
+    await this.postsService.deletePost(postId, blogId);
   }
 }
